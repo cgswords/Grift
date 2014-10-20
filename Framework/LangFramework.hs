@@ -2,6 +2,7 @@ module Framework.LangFramework where
 
 type Var   = String
 type Label = String
+type Name  = String
 
 data Op  = Plus 
          | Minus
@@ -14,4 +15,6 @@ data Prim = I Int
           | L Label
           | True
           | False
+          | Fn Name
+          | Void
   deriving (Show, Eq)          

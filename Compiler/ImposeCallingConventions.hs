@@ -1,9 +1,10 @@
-module Compiler.ExposeBasicBlocks (exposeBasicBlocks) where
+module Compiler.ImposeCallingConventions (imposeCallingConventions) where
 
 import Framework.LangFramework
 import qualified Framework.LangFramework as LF
 import Framework.Util
-import Framework.LIf
+import Framework.L2 
+import Framework.LIf as LIf
 import Control.Monad.State
 import Control.Applicative
 
@@ -11,23 +12,21 @@ import Data.Foldable
 import Data.List hiding (tail)
 import Prelude hiding (pred,tail)
 
-exposeBasicBlocks :: Expr -> State Int Expr
-exposeBasicBlocks = expr
+imposeCallingConventions :: Expr -> State Int Expr
+imposeCallingConventions = expr
 
 type Bindings = [(Label, Tail)]
 
-expr :: Expr -> State Int Expr
-expr (Letrec bindings body) = 
-  do (bodies, newBlocks) <- foldrM (\ (lbl,args,t) (bodies, blocks) -> 
-                                      do (body, newBlocks) <- tail t
-                                         let bodies' = (lbl,args,body):bodies
-                                             blocks' = newBlocks ++ blocks
-                                         return (bodies', blocks'))
-                                   ([],[]) bindings
-     (bod, blocks)       <- tail body                             
-     return $ Letrec (bodies ++ newBlocks ++ blocks) bod
+expr :: Expr -> State Int LIf.Expr
+expr (Letrec bindings b) = 
+  do binds <- mapM (\ (lbl, args, body) -> (lbl, body args body)) bindings
+     bod   <- body [] b
+     return $ LIf.Letrec binds bod
 
-tail :: Tail -> State Int (Tail, Bindings)
+body :: [Var] -> Body -> LIf.Tail
+body (Locals us t') = return $ tail t'
+
+tail :: Tail -> State Int LIf.Tail
 tail t@(TPrim prim)     = return (t, []) 
 tail (TBegin es t)      = do (tbody, tbindings) <- tail t
                              (ebody, ebindings) <- effects (reverse es) (TBegin [] tbody) []
