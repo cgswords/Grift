@@ -1,22 +1,31 @@
-module Framework.L0 where
+module Framework.LIf where
 
 import Framework.LangFramework
 
 data Expr 
-      = SetP Var Prim
+      = Letrec [(Label, [Var], Tail)] Tail
+  deriving (Show, Eq)
+
+data Tail
+      = TIf Pred Tail Tail
+      | TBegin [Effect] Tail
+      | TPrim Prim
+  deriving (Show, Eq)
+  
+data Pred 
+      = PPrim Prim
+      | PBinop Bop
+      | PIf Pred Pred Pred
+      | PBegin [Effect] Pred
+  deriving (Show, Eq)
+
+data Effect 
+      = Nop
+      | SetP Var Prim
       | SetB Var Bop
-      | SetC Var Call
-      | Begin [Expr]
-      | Ret Prim
-      | Jump Prim
-      | Branch Bop Prim Prim
-      | CallFunc Call
+      | EIf Pred Effect Effect
+      | Begin [Effect] Effect
   deriving (Show, Eq)
-
-data Call
-      = FuncCall Prim [Prim]
-  deriving (Show, Eq)
-
 
 data Bop 
       = Binop Op Prim Prim
